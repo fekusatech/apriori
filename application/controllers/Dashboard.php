@@ -70,7 +70,7 @@ class Dashboard extends CI_Controller
 	public function produk()
 	{
 		// $data['data']	= $this->M_admin->produk_all()->result();
-		$data['data']	= $this->MData->selectdatawhereresult('produk_new', ['status' => '1']);
+		$data['data']	= $this->MData->selectdataglobal2('produk_new');
 
 		$data['web']	= $this->data;
 		$data['title']	= 'Penyewaan Gedung';
@@ -109,7 +109,7 @@ class Dashboard extends CI_Controller
 		} else {
 			$data['kat']	= $this->db->get('kategori')->result();
 			$data['web']	= $this->data;
-			$data['title']	= 'Tambah Penyewaan Gedung';
+			$data['title']	= 'Tambah Produk';
 			$data['body']	= 'back/produk_add';
 			$this->load->view('back/template', $data);
 		}
@@ -119,14 +119,9 @@ class Dashboard extends CI_Controller
 		if ($this->input->post()) {
 
 			$data = [
-				'namaperumahan'			=> $this->input->post('produk'),
-				'contact_hp'			=> $this->input->post('contact_hp'),
-				'idkategori'			=> $this->input->post('kategori'),
-				'deskripsi'				=> $this->input->post('desk'),
-				'alamat'				=> $this->input->post('alamat'),
-				'luas'					=> $this->input->post('luas'),
+				'produk'			=> $this->input->post('produk'),
+				'qty'					=> $this->input->post('qty'),
 				'harga'					=> $this->input->post('harga'),
-				'embed'					=> $this->input->post('embed'),
 				'status'				=> $this->input->post('status')
 			];
 			if ($_FILES['file']['name'] != '') {
@@ -142,12 +137,12 @@ class Dashboard extends CI_Controller
 					$data['gambar'] = $file['file_name'];
 				}
 			}
-			$this->db->update('produk', $data, ['idproduk' => $id]);
-			$this->session->set_flashdata('message', 'swal("Berhasil!", "Ubah penyewaan gedung", "success");');
+			$this->db->update('produk_new', $data, ['id' => $this->input->post('id')]);
+			$this->session->set_flashdata('message', 'swal("Berhasil!", "Ubah produk", "success");');
 			redirect('dashboard/produk');
 		} else {
 			$data['kat']	= $this->db->get('kategori')->result();
-			$data['data']	= $this->db->get_where('produk', ['idproduk' => $id])->row();
+			$data['data']	= $this->db->get_where('produk_new', ['id' => $id])->row();
 			$data['web']	= $this->data;
 			$data['title']	= 'Update Penyewaan Gedung';
 			$data['body']	= 'back/produk_edit';
@@ -228,29 +223,8 @@ class Dashboard extends CI_Controller
 	{
 		$data = [
 			'nama'			=> $this->input->post('nama'),
-			'nohp'			=> $this->input->post('wa'),
-			'alamat'		=> $this->input->post('alamat'),
-			'email'			=> $this->input->post('email'),
-			'no_rek'			=> $this->input->post('no_rek'),
-			'pemilik_rek'			=> $this->input->post('pemilik_rek'),
-			'bank_rek'			=> $this->input->post('bank_rek'),
+			'limit_produk'		=> $this->input->post('limit_produk'),
 		];
-		if ($_FILES['foto_rek']['name'] != '') {
-			$config['upload_path'] 		= './assets/img/';
-			$config['allowed_types'] 	= 'gif|jpg|png|jpeg|gimp';
-			$config['file_name']  		= 'rekening-' . $this->input->post('bank_rek');
-			$config['overwrite']  		= true;
-
-			$this->load->library('upload', $config);
-
-			if ($this->upload->do_upload('foto_rek')) {
-				$file = $this->upload->data();
-				$data['foto_rek'] = $file['file_name'];
-			} else {
-				echo "error";
-				exit;
-			}
-		}
 		$this->db->update('config', $data, ['id_config' => $id]);
 		$this->session->set_flashdata('message', 'swal("Berhasil!", "Ubah Pengaturan Website", "success");');
 		redirect('dashboard/config');

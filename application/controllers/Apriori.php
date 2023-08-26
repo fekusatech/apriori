@@ -47,7 +47,8 @@ class Apriori extends CI_Controller
                 $filePath = $fileInfo['full_path'];
                 $outputapri = $this->extractDataFromExcel($filePath, $action);
                 $this->session->set_flashdata('success', 'Data berhasil diupload!');
-                $data['list_item'] = $outputapri;
+                $data['list_item'] = $outputapri['data'];
+                $data['barangditolak'] = $outputapri['produk'];
             }
         }
         $data['body']    = 'back/apri_new';
@@ -56,22 +57,19 @@ class Apriori extends CI_Controller
     }
     private function extractDataFromExcel($filePath, $action = null)
     {
-
+        $dataoutputnya = array();
+        $dataoutputnya['produk'] = array();
         $spreadsheet = IOFactory::load($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
         $data = $worksheet->toArray();
         for ($i = 1; $i < count($data); $i++) {
-            $datanew = [
-                'transaction_date' => date('Y-m-d', strtotime($data[$i][0])),
-                'produk' => $data[$i][1]
-            ];
             $datanewraw[] = [
                 'transaction_date' => date('Y-m-d', strtotime($data[$i][0])),
                 'produk' => $data[$i][1]
             ];
-            // $this->db->insert('transaksi_apri', $datanew);
         }
         if ($action <> null) {
+
             foreach ($datanewraw as $datanewraws) {
                 $dataraw = explode(",", $datanewraws['produk']);
                 foreach ($dataraw as $dataraws) {
@@ -80,7 +78,14 @@ class Apriori extends CI_Controller
                         if ($action == "tambah") {
                             $this->MData->edit(['id' => $cekdata->id], 'produk_new', ['qty' => $cekdata->qty + 1]);
                         } else {
-                            $this->MData->edit(['id' => $cekdata->id], 'produk_new', ['qty' => $cekdata->qty - 1]);
+                            $cekminimumstok = $this->MData->selectdatawhere('config', ['id_config' => '1']);
+                            if ($cekdata->qty > $cekminimumstok->limit_produk) {
+                                $this->MData->edit(['id' => $cekdata->id], 'produk_new', ['qty' => $cekdata->qty - 1]);
+                            } else {
+                                if (!isset($dataoutputnya['produk'][$cekdata->produk])) {
+                                    $dataoutputnya['produk'][$cekdata->produk] = [$cekdata->qty];
+                                }
+                            }
                         }
                     } else {
                         $datanya = [
@@ -93,7 +98,17 @@ class Apriori extends CI_Controller
                 }
             }
         }
-        return $datanewraw;
+        if (count($dataoutputnya['produk']) == 0) {
+            for ($i = 1; $i < count($data); $i++) {
+                $datanew = [
+                    'transaction_date' => date('Y-m-d', strtotime($data[$i][0])),
+                    'produk' => $data[$i][1]
+                ];
+                $this->db->insert('transaksi_apri', $datanew);
+            }
+        }
+        $dataoutputnya['data'] = $datanewraw;
+        return $dataoutputnya;
     }
     public function apri_proses()
     {

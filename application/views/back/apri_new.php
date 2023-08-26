@@ -1,10 +1,23 @@
 <section class="content">
     <div class="container-fluid">
-        <?php if ($this->session->flashdata('success')) : ?>
-            <center>
-                <h4><span class="badge badge-pill badge-success"> <?php echo $this->session->flashdata('success'); ?></span></h4>
-            </center>
-        <?php endif; ?>
+
+        <?php if (isset($barangditolak)) { ?>
+            <h4>Upload Gagal !! Barang yang kurang dari limit :</h4>
+            <?php foreach ($barangditolak as $key => $value) {
+                echo "<p>";
+                if ($key <> "") {
+                    echo "<b>$key</b> Qty: {$value[0]}<br>";
+                }
+                echo "</p>";
+            } ?>
+        <?php } else { ?>
+            <?php if ($this->session->flashdata('success')) : ?>
+                <center>
+                    <h4><span class="badge badge-pill badge-success"> <?php echo $this->session->flashdata('success'); ?></span></h4>
+                </center>
+            <?php endif; ?>
+        <?php } ?>
+
         <div class="row">
             <section class="col-lg-12 connectedSortable">
                 <div class="card">
